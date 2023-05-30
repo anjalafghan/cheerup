@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "45050816675",
+    "firebase_url": "https://cheer-up-13254-default-rtdb.firebaseio.com",
+    "project_id": "cheer-up-13254",
+    "storage_bucket": "cheer-up-13254.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:45050816675:android:1093a4d7c8b1900a663716",
+        "android_client_info": {
+          "package_name": "com.digitalchotu.cheerup"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "45050816675-msvqvnmpqoh64anfcoumkhvgdct28qqe.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDJZrdYiF2uCJOUniwv5wpWc69sSM-k6n8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "45050816675-msvqvnmpqoh64anfcoumkhvgdct28qqe.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
