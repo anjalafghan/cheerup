@@ -124,6 +124,8 @@ public class MainActivity extends AppCompatActivity {
 //                }
 //            }, 3000);
         } else {
+            getNewQuotes.setVisibility(View.INVISIBLE);
+
             // No internet connection, handle accordingly (e.g., show a message, disable buttons)
         }
     }
