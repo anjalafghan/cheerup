@@ -1,8 +1,5 @@
 package com.digitalchotu.cheerup
 
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -12,13 +9,11 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.getSystemService
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import com.google.android.gms.tasks.Task
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
-import java.util.Random
 
 
 class MainActivity : AppCompatActivity() {
@@ -90,53 +85,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkInternetConnectivity() {
-        if (networkManager.isNetworkAvailable()) {
-            getNewQuotes.visibility = View.VISIBLE
-            swipeRefreshLayout.isRefreshing = false
-        } else {
-            Toast.makeText(this, "You don't have internet but you will always have me", Toast.LENGTH_SHORT).show()
-            getNewQuotes.visibility = View.INVISIBLE
-            swipeRefreshLayout.isRefreshing = false
-        }
-    }
-}
-
-class NetworkManager(private val connectivityManager: ConnectivityManager?) {
-    fun isNetworkAvailable(): Boolean {
-        val network = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            connectivityManager?.activeNetwork
-        } else {
-            val connectivityManager = connectivityManager as ConnectivityManager
-            val networkInfo = connectivityManager.activeNetworkInfo
-            return networkInfo != null && networkInfo.isConnectedOrConnecting
-        }
-        val capabilities = connectivityManager?.getNetworkCapabilities(network)
-        return capabilities != null && capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-    }
-}
-
-class QuoteGenerator(private val mDatabase: DatabaseReference, private val quotes: TextView, private val swipeRefreshLayout: SwipeRefreshLayout) {
-
-    var maximum: Int = 1
-
-    fun generateRandomQuote() {
-        val min = 1
-        val max = maximum
-        val random = Random().nextInt(max - min + 1) + min
-        val userId = random.toString()
-
-        mDatabase.child("quotes").child(userId).get().addOnCompleteListener { task: Task<DataSnapshot?> ->
-            if (task.isSuccessful) {
-                val dataSnapshot = task.result
-                if (dataSnapshot != null) {
-                    val quote = dataSnapshot.value.toString()
-                    quotes.text = quote
-                    Log.e("Random:", random.toString())
-                }
+        val isNetworkAvailable = networkManager.isNetworkAvailable()
+        with(swipeRefreshLayout) {
+            isRefreshing = false
+            if (isNetworkAvailable) {
+                getNewQuotes.visibility = View.VISIBLE
             } else {
-                Log.e("Firebase", "Error getting data: ${task.exception}")
+                Toast.makeText(this@MainActivity, "You don't have internet but you will always have me", Toast.LENGTH_SHORT).show()
+                getNewQuotes.visibility = View.INVISIBLE
             }
-            swipeRefreshLayout.isRefreshing = false
         }
     }
+
 }
+
+
