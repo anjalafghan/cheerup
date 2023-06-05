@@ -1,117 +1,117 @@
-package com.digitalchotu.cheerup;
+package com.digitalchotu.cheerup
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.os.Build
+import android.os.Bundle
+import android.util.Log
+import android.view.View
+import android.widget.Button
+import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.getSystemService
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.google.android.gms.tasks.Task
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
+import java.util.*
 
-import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
-import android.widget.Button;
-import android.widget.TextView;
-import android.widget.Toast;
+class MainActivity : AppCompatActivity() {
+    private lateinit var mDatabase: DatabaseReference
+    private lateinit var quotes: TextView
+    private lateinit var getNewQuotes: Button
+    private var maximum: Int = 0
+    private lateinit var swipeRefreshLayout: SwipeRefreshLayout
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
-
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
-
-import java.util.Objects;
-import java.util.Random;
-
-public class MainActivity extends AppCompatActivity {
-    private DatabaseReference mDatabase;
-    private TextView quotes;
-    private Button getNewQuotes;
-    private int maximum;
-    private SwipeRefreshLayout swipeRefreshLayout;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        initializeViews();
-        hideActionBar();
-        setupDatabase();
-        checkInternetConnectivity();
-        setupGetNewQuotesButton();
-        setupOnRefreshView();
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+        initializeViews()
+        hideActionBar()
+        setupDatabase()
+        checkInternetConnectivity()
+        generateNewQuoteOnClick()
+        setupOnRefreshView()
     }
 
-    private void initializeViews() {
-        quotes = findViewById(R.id.quotes);
-        getNewQuotes = findViewById(R.id.getNewQuotes);
-        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
+    private fun initializeViews() {
+        quotes = findViewById(R.id.quotes)
+        getNewQuotes = findViewById(R.id.getNewQuotes)
+        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout)
     }
 
-    private void hideActionBar() {
-        Objects.requireNonNull(getSupportActionBar()).hide();
+    private fun hideActionBar() {
+        supportActionBar?.hide()
     }
 
-    private void setupDatabase() {
-        mDatabase = FirebaseDatabase.getInstance().getReference();
-        mDatabase.child("quotes").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                 maximum = (int) snapshot.getChildrenCount();
+    private fun setupDatabase() {
+        mDatabase = FirebaseDatabase.getInstance().reference
+        mDatabase.child("quotes").addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                maximum = snapshot.childrenCount.toInt()
             }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Log.e("Firebase", "Error: " + error.getMessage());
+            override fun onCancelled(error: DatabaseError) {
+                Log.e("Firebase", "Error: ${error.message}")
             }
-        });
+        })
     }
 
-    private void setupGetNewQuotesButton() {
-        getNewQuotes.setOnClickListener(view -> generateRandomQuote());
+    private fun generateNewQuoteOnClick() {
+        getNewQuotes.setOnClickListener { generateRandomQuote() }
     }
 
-    private void setupOnRefreshView() {
-        swipeRefreshLayout.setOnRefreshListener(this::checkInternetConnectivity);
+    private fun setupOnRefreshView() {
+        swipeRefreshLayout.setOnRefreshListener { checkInternetConnectivity() }
     }
 
-    private void checkInternetConnectivity() {
-        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
-
-        if (networkInfo != null && networkInfo.isConnectedOrConnecting()) {
-            getNewQuotes.setVisibility(View.VISIBLE);
-            swipeRefreshLayout.setRefreshing(false);
-
+    private fun checkInternetConnectivity() {
+        if (isNetworkAvailable()) {
+            getNewQuotes.visibility = View.VISIBLE
+            swipeRefreshLayout.isRefreshing = false
         } else {
-            Toast.makeText(this, "You don't have internet but you will always have me", Toast.LENGTH_SHORT).show();
-            getNewQuotes.setVisibility(View.INVISIBLE);
-            swipeRefreshLayout.setRefreshing(false);
-
+            Toast.makeText(this, "You don't have internet but you will always have me", Toast.LENGTH_SHORT).show()
+            getNewQuotes.visibility = View.INVISIBLE
+            swipeRefreshLayout.isRefreshing = false
         }
     }
 
-    private void generateRandomQuote() {
-        final int min = 1;
-        final int max = maximum;
-        final int random = new Random().nextInt((max - min) + 1) + min;
-        String userId = String.valueOf(random);
-
-        mDatabase.child("quotes").child(userId).get().addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
-                DataSnapshot dataSnapshot = task.getResult();
-                if (dataSnapshot != null) {
-                    String quote = String.valueOf(dataSnapshot.getValue());
-                    quotes.setText(quote);
-                    Log.e("Random:", String.valueOf(random));
-                }
-            } else {
-                Log.e("Firebase", "Error getting data: " + task.getException());
-            }
-            swipeRefreshLayout.setRefreshing(false);
-        });
+    private fun isNetworkAvailable(): Boolean {
+        val connectivityManager = getSystemService<ConnectivityManager>()
+        val network = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            connectivityManager?.activeNetwork
+        } else {
+            val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            val networkInfo = connectivityManager.activeNetworkInfo
+            return networkInfo != null && networkInfo.isConnectedOrConnecting
+        }
+        val capabilities = connectivityManager?.getNetworkCapabilities(network)
+        return capabilities != null && capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 
+    private fun generateRandomQuote() {
+        val min = 1
+        val max = maximum
+        val random = Random().nextInt(max - min + 1) + min
+        val userId = random.toString()
 
+        mDatabase.child("quotes").child(userId).get().addOnCompleteListener { task: Task<DataSnapshot?> ->
+            if (task.isSuccessful) {
+                val dataSnapshot = task.result
+                if (dataSnapshot != null) {
+                    val quote = dataSnapshot.value.toString()
+                    quotes.text = quote
+                    Log.e("Random:", random.toString())
+                }
+            } else {
+                Log.e("Firebase", "Error getting data: ${task.exception}")
+            }
+            swipeRefreshLayout.isRefreshing = false
+        }
+    }
 }
