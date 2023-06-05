@@ -27,6 +27,11 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
+
     namespace 'com.digitalchotu.cheerup'
 }
 
@@ -39,9 +44,15 @@ dependencies {
     implementation 'com.google.firebase:firebase-database:19.2.0'
     testImplementation 'junit:junit:4.+'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+    androidTestImplementation "androidx.test.espresso:espresso-core:3.5.1"
     implementation platform('com.google.firebase:firebase-bom:28.2.1')
     implementation 'com.google.firebase:firebase-analytics'
     implementation 'com.intellij:annotations:+@jar'
+    testImplementation "org.mockito:mockito-core:3.+"
+    testImplementation "androidx.arch.core:core-testing:2.1.0"
+    implementation 'com.google.dagger:dagger:2.38.1'
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
+
+
 
 }

@@ -1,19 +1,18 @@
 package com.digitalchotu.cheerup;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.view.ViewCompat;
-
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
 import android.view.View;
-import android.view.animation.DecelerateInterpolator;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -23,8 +22,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.util.Random;
 
 public class MainActivity extends AppCompatActivity {
@@ -32,7 +29,9 @@ public class MainActivity extends AppCompatActivity {
     private TextView quotes;
     private Button getNewQuotes;
     private int maximum = 0;
-    private Handler handler;
+
+    private SwipeRefreshLayout swipeRefreshLayout;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,11 +43,38 @@ public class MainActivity extends AppCompatActivity {
         setupDatabase();
         setupGetNewQuotesButton();
         showButtons();
+        setupOnRefreshView();
+    }
+
+    private void setupOnRefreshView() {
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                checkInternetConnectivity();
+            }
+        });
+    }
+
+    private void checkInternetConnectivity() {
+
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+
+        if (networkInfo != null && networkInfo.isConnectedOrConnecting()) {
+            // Internet connection is available, perform the refresh action
+            generateRandomQuote();
+        } else {
+            // No internet connection, show a message or handle accordingly
+            Toast.makeText(this, "No internet connection", Toast.LENGTH_SHORT).show();
+            swipeRefreshLayout.setRefreshing(false); // Stop the refresh animation
+        }
     }
 
     private void initializeViews() {
         quotes = findViewById(R.id.quotes);
         getNewQuotes = findViewById(R.id.getNewQuotes);
+        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
+
     }
 
     private void hideActionBar() {
@@ -86,18 +112,25 @@ public class MainActivity extends AppCompatActivity {
     private void generateRandomQuote() {
         final int min = 1;
         final int max = maximum;
-        Log.e("Maximum:", String.valueOf(max));
         final int random = new Random().nextInt((max - min) + 1) + min;
         String userId = String.valueOf(random);
 
         mDatabase.child("quotes").child(userId).get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<DataSnapshot> task) {
-                if (!task.isSuccessful()) {
-                    Log.e("Firebase", "Error getting data: " + task.getException());
+                if (task.isSuccessful()) {
+                    DataSnapshot dataSnapshot = task.getResult();
+                    if (dataSnapshot != null) {
+                        String quote = String.valueOf(dataSnapshot.getValue());
+                        quotes.setText(quote);
+                        Log.e("Random:", String.valueOf(random));
+                        swipeRefreshLayout.setRefreshing(false); // Stop the refresh animation
+
+                    }
                 } else {
-                    quotes.setText(String.valueOf(task.getResult().getValue()));
-                    Log.e("Random:", String.valueOf(random));
+                    Log.e("Firebase", "Error getting data: " + task.getException());
+                    swipeRefreshLayout.setRefreshing(false); // Stop the refresh animation
+
                 }
             }
         });
@@ -107,27 +140,11 @@ public class MainActivity extends AppCompatActivity {
         ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
 
-        if ((networkInfo != null) && networkInfo.isConnectedOrConnecting()) {
+        if (networkInfo != null && networkInfo.isConnectedOrConnecting()) {
             getNewQuotes.setVisibility(View.VISIBLE);
-//            handler = new Handler();
-//            handler.postDelayed(new Runnable() {
-//                @Override
-//                public void run() {
-//                    getNewQuotes.setVisibility(View.INVISIBLE);
-//                    Log.e("DELAY1", "DELAY1");
-//                }
-//            }, 0);
-//            handler.postDelayed(new Runnable() {
-//                @Override
-//                public void run() {
-//                    Log.e("DELAY2", "DELAY2");
-//                }
-//            }, 3000);
         } else {
             getNewQuotes.setVisibility(View.INVISIBLE);
-
             // No internet connection, handle accordingly (e.g., show a message, disable buttons)
         }
     }
-
 }
