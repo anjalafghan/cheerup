@@ -43,6 +43,7 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+
     private fun initializeViews() {
         quotes = findViewById(R.id.quotes)
         getNewQuotes = findViewById(R.id.getNewQuotes)
@@ -77,7 +78,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun generateNewQuoteOnClick() {
-        getNewQuotes.setOnClickListener { quoteGenerator.generateRandomQuote() }
+        getNewQuotes.setOnClickListener {
+            checkInternetConnectivity()
+            quoteGenerator.generateRandomQuote()
+
+        }
     }
 
     private fun setupOnRefreshView() {

@@ -13,6 +13,7 @@ class QuoteGenerator(private val mDatabase: DatabaseReference, private val quote
     var maximum: Int = 1
 
     fun generateRandomQuote() {
+
         val min = 1
         val max = maximum
         val random = Random().nextInt(max - min + 1) + min
