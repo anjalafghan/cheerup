@@ -15,7 +15,6 @@ import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 
-
 class MainActivity : AppCompatActivity() {
     private lateinit var mDatabase: DatabaseReference
     private lateinit var quotes: TextView
@@ -23,6 +22,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     private lateinit var networkManager: NetworkManager
     private lateinit var quoteGenerator: QuoteGenerator
+    private var isNetworkAvailable: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,19 +30,11 @@ class MainActivity : AppCompatActivity() {
         initializeViews()
         hideActionBar()
         setupDatabase()
-
-    }
-
-    override fun onStart() {
-        super.onStart()
         setupNetworkManager()
-        checkInternetConnectivity()
         setupQuoteGenerator()
-        generateNewQuoteOnClick()
         setupOnRefreshView()
-
+        generateNewQuoteOnClick()
     }
-
 
     private fun initializeViews() {
         quotes = findViewById(R.id.quotes)
@@ -69,8 +61,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupNetworkManager() {
-
         networkManager = NetworkManager(getSystemService())
+        isNetworkAvailable = networkManager.isNetworkAvailable()
     }
 
     private fun setupQuoteGenerator() {
@@ -79,29 +71,26 @@ class MainActivity : AppCompatActivity() {
 
     private fun generateNewQuoteOnClick() {
         getNewQuotes.setOnClickListener {
-            checkInternetConnectivity()
-            quoteGenerator.generateRandomQuote()
-
-        }
-    }
-
-    private fun setupOnRefreshView() {
-        swipeRefreshLayout.setOnRefreshListener { checkInternetConnectivity() }
-    }
-
-    private fun checkInternetConnectivity() {
-        val isNetworkAvailable = networkManager.isNetworkAvailable()
-        with(swipeRefreshLayout) {
-            isRefreshing = false
+            isNetworkAvailable = networkManager.isNetworkAvailable()
             if (isNetworkAvailable) {
-                getNewQuotes.visibility = View.VISIBLE
+                quoteGenerator.generateRandomQuote()
             } else {
-                Toast.makeText(this@MainActivity, "You don't have internet but you will always have me", Toast.LENGTH_SHORT).show()
                 getNewQuotes.visibility = View.INVISIBLE
+                Toast.makeText(this, "You don't have internet but you will always have me", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
+    private fun setupOnRefreshView() {
+        swipeRefreshLayout.setOnRefreshListener {
+            isNetworkAvailable = networkManager.isNetworkAvailable()
+            if (isNetworkAvailable) {
+                getNewQuotes.visibility = View.VISIBLE
+            } else {
+                Toast.makeText(this, "You don't have internet but you will always have me", Toast.LENGTH_SHORT).show()
+                getNewQuotes.visibility = View.INVISIBLE
+            }
+            swipeRefreshLayout.isRefreshing = false
+        }
+    }
 }
-
-
