@@ -1,7 +1,6 @@
-package com.digitalchotu.cheerup
-import android.content.Context
+package com.digichotu.cheerup
+
 import android.net.ConnectivityManager
-import android.net.Network
 import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.Bundle
@@ -13,20 +12,23 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.getSystemService
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.digitalchotu.cheerup.R
 import com.google.android.gms.tasks.Task
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
-import java.util.*
+import java.util.Random
+
 
 class MainActivity : AppCompatActivity() {
     private lateinit var mDatabase: DatabaseReference
     private lateinit var quotes: TextView
     private lateinit var getNewQuotes: Button
-    private var maximum: Int = 0
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
+    private lateinit var networkManager: NetworkManager
+    private lateinit var quoteGenerator: QuoteGenerator
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,6 +36,8 @@ class MainActivity : AppCompatActivity() {
         initializeViews()
         hideActionBar()
         setupDatabase()
+        setupNetworkManager()
+        setupQuoteGenerator()
         checkInternetConnectivity()
         generateNewQuoteOnClick()
         setupOnRefreshView()
@@ -53,7 +57,8 @@ class MainActivity : AppCompatActivity() {
         mDatabase = FirebaseDatabase.getInstance().reference
         mDatabase.child("quotes").addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                maximum = snapshot.childrenCount.toInt()
+                val maximum = snapshot.childrenCount.toInt()
+                quoteGenerator.maximum = maximum
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -62,8 +67,17 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
+    private fun setupNetworkManager() {
+
+        networkManager = NetworkManager(getSystemService())
+    }
+
+    private fun setupQuoteGenerator() {
+        quoteGenerator = QuoteGenerator(mDatabase, quotes, swipeRefreshLayout)
+    }
+
     private fun generateNewQuoteOnClick() {
-        getNewQuotes.setOnClickListener { generateRandomQuote() }
+        getNewQuotes.setOnClickListener { quoteGenerator.generateRandomQuote() }
     }
 
     private fun setupOnRefreshView() {
@@ -71,7 +85,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkInternetConnectivity() {
-        if (isNetworkAvailable()) {
+        if (networkManager.isNetworkAvailable()) {
             getNewQuotes.visibility = View.VISIBLE
             swipeRefreshLayout.isRefreshing = false
         } else {
@@ -80,21 +94,31 @@ class MainActivity : AppCompatActivity() {
             swipeRefreshLayout.isRefreshing = false
         }
     }
+}
 
-    private fun isNetworkAvailable(): Boolean {
-        val connectivityManager = getSystemService<ConnectivityManager>()
+class NetworkManager(private val connectivityManager: ConnectivityManager?) {
+    fun isNetworkAvailable(): Boolean {
         val network = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             connectivityManager?.activeNetwork
         } else {
-            val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            val connectivityManager = connectivityManager as ConnectivityManager
             val networkInfo = connectivityManager.activeNetworkInfo
             return networkInfo != null && networkInfo.isConnectedOrConnecting
         }
         val capabilities = connectivityManager?.getNetworkCapabilities(network)
         return capabilities != null && capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
+}
 
-    private fun generateRandomQuote() {
+class QuoteGenerator(
+        private val mDatabase: DatabaseReference,
+        private val quotes: TextView,
+        private val swipeRefreshLayout: SwipeRefreshLayout
+) {
+
+    var maximum: Int = 1
+
+    fun generateRandomQuote() {
         val min = 1
         val max = maximum
         val random = Random().nextInt(max - min + 1) + min
