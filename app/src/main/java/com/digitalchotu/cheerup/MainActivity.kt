@@ -90,18 +90,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkInternetConnectivity() {
-        val isNetworkAvailable = networkManager.isNetworkAvailable()
-        with(swipeRefreshLayout) {
-            isRefreshing = false
-            if (isNetworkAvailable) {
-                getNewQuotes.visibility = View.VISIBLE
-            } else {
-                Toast.makeText(this@MainActivity, "You don't have internet but you will always have me", Toast.LENGTH_SHORT).show()
-                getNewQuotes.visibility = View.INVISIBLE
-            }
+        if (networkManager.isNetworkAvailable()) {
+            getNewQuotes.visibility = View.VISIBLE
+            swipeRefreshLayout.isRefreshing = false
+        } else {
+            Toast.makeText(this, "You don't have internet but you will always have me", Toast.LENGTH_SHORT).show()
+            getNewQuotes.visibility = View.INVISIBLE
+            swipeRefreshLayout.isRefreshing = false
         }
     }
-
 }
 
 class NetworkManager(private val connectivityManager: ConnectivityManager?) {
