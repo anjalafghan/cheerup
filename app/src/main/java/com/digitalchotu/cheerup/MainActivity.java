@@ -27,7 +27,7 @@ public class MainActivity extends AppCompatActivity {
     private DatabaseReference mDatabase;
     private TextView quotes;
     private Button getNewQuotes;
-    private int maximum = 0;
+    private int maximum;
     private SwipeRefreshLayout swipeRefreshLayout;
 
     @Override
@@ -38,8 +38,8 @@ public class MainActivity extends AppCompatActivity {
         initializeViews();
         hideActionBar();
         setupDatabase();
+        checkInternetConnectivity();
         setupGetNewQuotesButton();
-        showButtons();
         setupOnRefreshView();
     }
 
@@ -58,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
         mDatabase.child("quotes").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                maximum = (int) snapshot.getChildrenCount();
+                 maximum = (int) snapshot.getChildrenCount();
             }
 
             @Override
@@ -81,10 +81,14 @@ public class MainActivity extends AppCompatActivity {
         NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
 
         if (networkInfo != null && networkInfo.isConnectedOrConnecting()) {
-            generateRandomQuote();
-        } else {
-            Toast.makeText(this, "No internet connection", Toast.LENGTH_SHORT).show();
+            getNewQuotes.setVisibility(View.VISIBLE);
             swipeRefreshLayout.setRefreshing(false);
+
+        } else {
+            Toast.makeText(this, "You don't have internet but you will always have me", Toast.LENGTH_SHORT).show();
+            getNewQuotes.setVisibility(View.INVISIBLE);
+            swipeRefreshLayout.setRefreshing(false);
+
         }
     }
 
@@ -109,10 +113,5 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void showButtons() {
-        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
 
-        getNewQuotes.setVisibility(networkInfo != null && networkInfo.isConnectedOrConnecting() ? View.VISIBLE : View.INVISIBLE);
-    }
 }
