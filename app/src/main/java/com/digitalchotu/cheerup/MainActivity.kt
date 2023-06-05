@@ -1,4 +1,4 @@
-package com.digichotu.cheerup
+package com.digitalchotu.cheerup
 
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
@@ -12,7 +12,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.getSystemService
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import com.digitalchotu.cheerup.R
 import com.google.android.gms.tasks.Task
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -36,11 +35,17 @@ class MainActivity : AppCompatActivity() {
         initializeViews()
         hideActionBar()
         setupDatabase()
+
+    }
+
+    override fun onStart() {
+        super.onStart()
         setupNetworkManager()
-        setupQuoteGenerator()
         checkInternetConnectivity()
+        setupQuoteGenerator()
         generateNewQuoteOnClick()
         setupOnRefreshView()
+
     }
 
     private fun initializeViews() {
@@ -85,15 +90,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkInternetConnectivity() {
-        if (networkManager.isNetworkAvailable()) {
-            getNewQuotes.visibility = View.VISIBLE
-            swipeRefreshLayout.isRefreshing = false
-        } else {
-            Toast.makeText(this, "You don't have internet but you will always have me", Toast.LENGTH_SHORT).show()
-            getNewQuotes.visibility = View.INVISIBLE
-            swipeRefreshLayout.isRefreshing = false
+        val isNetworkAvailable = networkManager.isNetworkAvailable()
+        with(swipeRefreshLayout) {
+            isRefreshing = false
+            if (isNetworkAvailable) {
+                getNewQuotes.visibility = View.VISIBLE
+            } else {
+                Toast.makeText(this@MainActivity, "You don't have internet but you will always have me", Toast.LENGTH_SHORT).show()
+                getNewQuotes.visibility = View.INVISIBLE
+            }
         }
     }
+
 }
 
 class NetworkManager(private val connectivityManager: ConnectivityManager?) {
@@ -110,11 +118,7 @@ class NetworkManager(private val connectivityManager: ConnectivityManager?) {
     }
 }
 
-class QuoteGenerator(
-        private val mDatabase: DatabaseReference,
-        private val quotes: TextView,
-        private val swipeRefreshLayout: SwipeRefreshLayout
-) {
+class QuoteGenerator(private val mDatabase: DatabaseReference, private val quotes: TextView, private val swipeRefreshLayout: SwipeRefreshLayout) {
 
     var maximum: Int = 1
 

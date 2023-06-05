@@ -11,7 +11,7 @@
         android:theme="@style/Theme.CheerUp"
         >
         <activity
-            android:name="com.digichotu.cheerup.MainActivity"
+            android:name=".MainActivity"
             android:label="YourAppName"
             android:exported="true">
             <intent-filter>
