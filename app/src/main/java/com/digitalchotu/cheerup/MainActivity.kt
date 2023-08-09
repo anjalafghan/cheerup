@@ -1,5 +1,7 @@
 package com.digitalchotu.cheerup
 
+import android.content.Context
+import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -8,7 +10,9 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.getSystemService
+import androidx.core.view.accessibility.AccessibilityEventCompat.setAction
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
@@ -75,8 +79,8 @@ class MainActivity : AppCompatActivity() {
             if (isNetworkAvailable) {
                 quoteGenerator.generateRandomQuote()
             } else {
+                quoteGenerator.generateNoInternetQuote()
                 getNewQuotes.visibility = View.INVISIBLE
-                Toast.makeText(this, "You don't have internet but you will always have me", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -87,7 +91,6 @@ class MainActivity : AppCompatActivity() {
             if (isNetworkAvailable) {
                 getNewQuotes.visibility = View.VISIBLE
             } else {
-                Toast.makeText(this, "You don't have internet but you will always have me", Toast.LENGTH_SHORT).show()
                 getNewQuotes.visibility = View.INVISIBLE
             }
             swipeRefreshLayout.isRefreshing = false
